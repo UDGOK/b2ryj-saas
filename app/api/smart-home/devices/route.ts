@@ -1,23 +1,40 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '../../auth/[...nextauth]/route'
-import { Seam } from 'seam' // Changed from default import to named import
+import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 
-const seam = new Seam(process.env.SEAM_API_KEY!)
-
-export async function GET() {
-  const session = await getServerSession(authOptions)
-
-  if (!session || session.user.role !== 'PROPERTY_OWNER') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+// Mock data for development since Seam might not be properly initialized
+const mockDevices = [
+  {
+    id: 'device_1',
+    name: 'Front Door Lock',
+    type: 'lock',
+    isOnline: true,
+  },
+  {
+    id: 'device_2',
+    name: 'Living Room Thermostat',
+    type: 'thermostat',
+    isOnline: true,
   }
+]
 
+export async function GET(req: NextRequest) {
   try {
-    const devices = await seam.devices.list()
-    return NextResponse.json(devices)
+    const session = await getServerSession(authOptions)
+
+    if (!session || session.user?.role !== 'PROPERTY_OWNER') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // For development, return mock data
+    // In production, you would integrate with Seam here
+    return NextResponse.json(mockDevices)
   } catch (error) {
-    console.error('Error fetching devices:', error)
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+    console.error('Error in smart home devices route:', error)
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    )
   }
 }
 

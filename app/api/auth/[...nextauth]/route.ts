@@ -5,12 +5,7 @@ import { compare } from "bcrypt"
 import prisma from '@/lib/prisma'
 
 export const authOptions: NextAuthOptions = {
-  pages: {
-    signIn: '/auth/signin',
-  },
-  session: {
-    strategy: 'jwt',
-  },
+  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -20,25 +15,20 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error('Please enter an email and password')
+          return null
         }
-
         const user = await prisma.user.findUnique({
           where: {
             email: credentials.email
           }
         })
-
         if (!user) {
-          throw new Error('No user found with this email')
+          return null
         }
-
         const isPasswordValid = await compare(credentials.password, user.password)
-
         if (!isPasswordValid) {
-          throw new Error('Invalid password')
+          return null
         }
-
         return {
           id: user.id,
           email: user.email,
@@ -52,19 +42,22 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role
-        token.id = user.id
       }
       return token
     },
     async session({ session, token }) {
       if (session?.user) {
         session.user.role = token.role as string
-        session.user.id = token.id as string
       }
       return session
     }
   },
-  adapter: PrismaAdapter(prisma),
+  pages: {
+    signIn: '/auth/signin',
+  },
+  session: {
+    strategy: 'jwt',
+  },
 }
 
 const handler = NextAuth(authOptions)

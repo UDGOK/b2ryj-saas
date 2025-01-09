@@ -2,7 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import Seam from 'seam'
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { ReloadIcon } from "@radix-ui/react-icons"
 
 interface Device {
   id: string
@@ -14,6 +18,7 @@ interface Device {
 export default function SmartHomeControls() {
   const [devices, setDevices] = useState<Device[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const { data: session } = useSession()
 
   useEffect(() => {
@@ -22,14 +27,20 @@ export default function SmartHomeControls() {
 
   const fetchDevices = async () => {
     try {
+      setIsLoading(true)
+      setError(null)
       const response = await fetch('/api/smart-home/devices')
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch devices')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to fetch devices')
       }
+      
       const data = await response.json()
       setDevices(data)
     } catch (error) {
       console.error('Error fetching devices:', error)
+      setError(error instanceof Error ? error.message : 'Failed to load devices')
     } finally {
       setIsLoading(false)
     }
@@ -42,83 +53,100 @@ export default function SmartHomeControls() {
       })
 
       if (!response.ok) {
-        throw new Error(`Failed to perform action ${action} on device`)
+        const errorData = await response.json()
+        throw new Error(errorData.error || `Failed to perform ${action}`)
       }
 
-      // Refresh the devices list after action
-      fetchDevices()
+      await fetchDevices()
     } catch (error) {
-      console.error(`Error performing action ${action} on device:`, error)
+      console.error(`Error performing action ${action}:`, error)
+      setError(error instanceof Error ? error.message : 'Failed to perform action')
     }
   }
 
   if (isLoading) {
-    return <div>Loading smart home devices...</div>
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center p-6">
+          <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+          <p>Loading smart home devices...</p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
-    <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-      <div className="px-4 py-5 sm:px-6">
-        <h3 className="text-lg leading-6 font-medium text-gray-900">Smart Home Controls</h3>
-      </div>
-      <ul className="divide-y divide-gray-200">
-        {devices.map((device) => (
-          <li key={device.id} className="px-4 py-4 sm:px-6">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-indigo-600 truncate">{device.name}</p>
-              <div className="ml-2 flex-shrink-0 flex">
-                <p className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                  device.isOnline ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                }`}>
-                  {device.isOnline ? 'Online' : 'Offline'}
-                </p>
-              </div>
-            </div>
-            <div className="mt-2 sm:flex sm:justify-between">
-              <div className="sm:flex">
-                <p className="flex items-center text-sm text-gray-500">
+    <Card>
+      <CardHeader>
+        <CardTitle>Smart Home Controls</CardTitle>
+        <CardDescription>Manage your connected devices</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
+        {devices.length === 0 ? (
+          <p className="text-center text-muted-foreground">No devices found.</p>
+        ) : (
+          <div className="space-y-4">
+            {devices.map((device) => (
+              <div key={device.id} className="rounded-lg border p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium">{device.name}</h3>
+                  <Badge variant={device.isOnline ? "success" : "destructive"}>
+                    {device.isOnline ? 'Online' : 'Offline'}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
                   Type: {device.type}
                 </p>
+                <div className="flex flex-wrap gap-2">
+                  {device.type === 'lock' && (
+                    <>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleDeviceAction(device.id, 'lock')}
+                      >
+                        Lock
+                      </Button>
+                      <Button 
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDeviceAction(device.id, 'unlock')}
+                      >
+                        Unlock
+                      </Button>
+                    </>
+                  )}
+                  {device.type === 'thermostat' && (
+                    <>
+                      <Button 
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDeviceAction(device.id, 'increaseTemp')}
+                      >
+                        Increase Temp
+                      </Button>
+                      <Button 
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDeviceAction(device.id, 'decreaseTemp')}
+                      >
+                        Decrease Temp
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
-              <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                {device.type === 'lock' && (
-                  <>
-                    <button
-                      onClick={() => handleDeviceAction(device.id, 'lock')}
-                      className="mr-2 px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                      Lock
-                    </button>
-                    <button
-                      onClick={() => handleDeviceAction(device.id, 'unlock')}
-                      className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                      Unlock
-                    </button>
-                  </>
-                )}
-                {device.type === 'thermostat' && (
-                  <>
-                    <button
-                      onClick={() => handleDeviceAction(device.id, 'increaseTemp')}
-                      className="mr-2 px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                      Increase Temp
-                    </button>
-                    <button
-                      onClick={() => handleDeviceAction(device.id, 'decreaseTemp')}
-                      className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                      Decrease Temp
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 
