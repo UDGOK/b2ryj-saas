@@ -94,6 +94,8 @@ model MaintenanceRequest {
   priority              Priority              @default(LOW)
   status                RequestStatus         @default(PENDING)
   images                String[]
+  category              RequestCategory       @default(OTHER)
+  urgency               RequestUrgency        @default(NORMAL)
   propertyId            String
   property              Property              @relation(fields: [propertyId], references: [id])
   requesterId           String
@@ -240,6 +242,19 @@ enum Priority {
   EMERGENCY
 }
 
+enum RequestCategory {
+  PLUMBING
+  ELECTRICAL
+  STRUCTURAL
+  APPLIANCE
+  OTHER
+}
+
+enum RequestUrgency {
+  NORMAL
+  URGENT
+}
+
 enum RequestStatus {
   PENDING
   IN_PROGRESS
@@ -306,4 +321,3 @@ enum NotificationType {
   MESSAGE
   SYSTEM
 }
-

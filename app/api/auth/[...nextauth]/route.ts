@@ -2,7 +2,15 @@ import NextAuth, { NextAuthOptions } from "next-auth"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { compare } from "bcrypt"
-import prisma from '@/lib/prisma'
+import prisma from '../../../lib/prisma'
+import { SessionUser } from '../../../../lib/types/maintenance-requests'
+
+declare module "next-auth" {
+  interface User extends SessionUser {}
+  interface Session {
+    user: SessionUser
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -14,9 +22,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        console.log("Authorize function called with credentials:", credentials?.email)
         if (!credentials?.email || !credentials?.password) {
-          console.log("Missing credentials")
           return null
         }
 
@@ -27,28 +33,22 @@ export const authOptions: NextAuthOptions = {
             }
           })
 
-          console.log("User lookup result:", user ? "User found" : "User not found")
-
           if (!user) {
-            console.log("User not found:", credentials.email)
             return null
           }
 
           const isPasswordValid = await compare(credentials.password, user.password)
           
-          console.log("Password validation result:", isPasswordValid)
-
           if (!isPasswordValid) {
-            console.log("Invalid password for user:", credentials.email)
             return null
           }
 
-          console.log("Authentication successful for user:", credentials.email)
           return {
             id: user.id,
             email: user.email,
             name: user.name,
             role: user.role,
+            propertyId: user.propertyId
           }
         } catch (error) {
           console.error("Auth error:", error)
@@ -60,16 +60,16 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role
+        token.role = user.role as SessionUser['role']
+        token.propertyId = user.propertyId as string | null
       }
-      console.log("JWT callback. Token:", token)
       return token
     },
     async session({ session, token }) {
       if (session?.user) {
-        session.user.role = token.role as string
+        session.user.role = token.role as SessionUser['role']
+        session.user.propertyId = token.propertyId as string | null
       }
-      console.log("Session callback. Session:", session)
       return session
     }
   },
@@ -85,4 +85,3 @@ export const authOptions: NextAuthOptions = {
 
 const handler = NextAuth(authOptions)
 export { handler as GET, handler as POST }
-
