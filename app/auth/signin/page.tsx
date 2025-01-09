@@ -26,10 +26,12 @@ export default function SignIn() {
         password,
       })
 
-      if (result?.error) {
+      console.log('SignIn result:', result) // Add this debug log
+
+      if (!result?.ok) {
         toast({
-          title: "Error",
-          description: "Invalid credentials. Please try again.",
+          title: "Authentication Error",
+          description: result?.error || "Failed to sign in. Please check your credentials.",
           variant: "destructive",
         })
       } else {
@@ -37,9 +39,10 @@ export default function SignIn() {
         router.refresh()
       }
     } catch (error) {
+      console.error('SignIn error:', error) // Add this debug log
       toast({
         title: "Error",
-        description: "An error occurred. Please try again.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       })
     } finally {

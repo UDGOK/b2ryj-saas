@@ -15,25 +15,43 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.log("Missing credentials")
           return null
         }
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
+
+        try {
+          const user = await prisma.user.findUnique({
+            where: {
+              email: credentials.email
+            }
+          })
+
+          if (!user) {
+            console.log("User not found:", credentials.email)
+            return null
           }
-        })
-        if (!user) {
+
+          const isPasswordValid = await compare(credentials.password, user.password)
+          
+          console.log("Password validation:", { 
+            email: credentials.email,
+            isValid: isPasswordValid 
+          })
+
+          if (!isPasswordValid) {
+            console.log("Invalid password")
+            return null
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          }
+        } catch (error) {
+          console.error("Auth error:", error)
           return null
-        }
-        const isPasswordValid = await compare(credentials.password, user.password)
-        if (!isPasswordValid) {
-          return null
-        }
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
         }
       }
     })
@@ -57,7 +75,9 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
+  debug: true, // Add this to see NextAuth.js debug logs
 }
 
 const handler = NextAuth(authOptions)
