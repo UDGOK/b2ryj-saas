@@ -145,7 +145,7 @@ export function TenantsTable() {
                         Edit
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => router.push(`/dashboard/tenants/${tenant.id}/unit`)}
+                        onClick={() => router.push(`/dashboard/tenants/${tenant.id}`)}
                       >
                         <Home className="mr-2 h-4 w-4" />
                         View Unit
@@ -190,4 +190,3 @@ export function TenantsTable() {
     </>
   )
 }
-
