@@ -32,7 +32,7 @@ export default function ProfilePage() {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch('/api/profile')
+      const response = await fetch('/api/dashboard/profile')
       if (!response.ok) throw new Error('Failed to fetch profile')
       const data = await response.json()
       setProfile(data)
@@ -53,7 +53,7 @@ export default function ProfilePage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch('/api/profile', {
+      const response = await fetch('/api/dashboard/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profile),
