@@ -14,6 +14,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
+        console.log("Authorize function called with credentials:", credentials?.email)
         if (!credentials?.email || !credentials?.password) {
           console.log("Missing credentials")
           return null
@@ -26,6 +27,8 @@ export const authOptions: NextAuthOptions = {
             }
           })
 
+          console.log("User lookup result:", user ? "User found" : "User not found")
+
           if (!user) {
             console.log("User not found:", credentials.email)
             return null
@@ -33,16 +36,14 @@ export const authOptions: NextAuthOptions = {
 
           const isPasswordValid = await compare(credentials.password, user.password)
           
-          console.log("Password validation:", { 
-            email: credentials.email,
-            isValid: isPasswordValid 
-          })
+          console.log("Password validation result:", isPasswordValid)
 
           if (!isPasswordValid) {
-            console.log("Invalid password")
+            console.log("Invalid password for user:", credentials.email)
             return null
           }
 
+          console.log("Authentication successful for user:", credentials.email)
           return {
             id: user.id,
             email: user.email,
@@ -61,12 +62,14 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = user.role
       }
+      console.log("JWT callback. Token:", token)
       return token
     },
     async session({ session, token }) {
       if (session?.user) {
         session.user.role = token.role as string
       }
+      console.log("Session callback. Session:", session)
       return session
     }
   },
@@ -77,7 +80,7 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  debug: true, // Add this to see NextAuth.js debug logs
+  debug: true,
 }
 
 const handler = NextAuth(authOptions)
