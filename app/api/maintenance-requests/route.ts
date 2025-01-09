@@ -3,10 +3,16 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '../auth/[...nextauth]/route'
 import prisma from '@/lib/prisma'
 
+interface SessionUser {
+  id: string
+  email: string
+  name?: string
+}
+
 export async function GET() {
   const session = await getServerSession(authOptions)
 
-  if (!session) {
+  if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -24,21 +30,22 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
+  const user = session?.user as SessionUser | undefined
 
-  if (!session) {
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
-    const { title, description, priority, propertyId } = await req.json()
+    const { description, priority } = await req.json()
     const newRequest = await prisma.maintenanceRequest.create({
       data: {
-        title,
+        title: 'Maintenance Request',
         description,
         priority,
         status: 'PENDING',
-        requesterId: session.user.id,
-        propertyId,
+        requesterId: user.id,
+        propertyId: 'default-property-id', // TODO: Replace with actual property ID
       },
     })
     return NextResponse.json(newRequest)
@@ -47,4 +54,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
-
