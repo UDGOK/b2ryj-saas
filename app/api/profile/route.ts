@@ -11,18 +11,19 @@ export async function GET() {
   }
 
   try {
-    const requests = await prisma.maintenanceRequest.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 5,
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { name: true, email: true, phone: true },
     })
-    return NextResponse.json(requests)
+
+    return NextResponse.json(user)
   } catch (error) {
-    console.error('Failed to fetch maintenance requests:', error)
+    console.error('Failed to fetch user profile:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
 
-export async function POST(req: Request) {
+export async function PUT(req: Request) {
   const session = await getServerSession(authOptions)
 
   if (!session) {
@@ -30,20 +31,16 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { title, description, priority, propertyId } = await req.json()
-    const newRequest = await prisma.maintenanceRequest.create({
-      data: {
-        title,
-        description,
-        priority,
-        status: 'PENDING',
-        requesterId: session.user.id,
-        propertyId,
-      },
+    const { name, email, phone } = await req.json()
+
+    const updatedUser = await prisma.user.update({
+      where: { id: session.user.id },
+      data: { name, email, phone },
     })
-    return NextResponse.json(newRequest)
+
+    return NextResponse.json(updatedUser)
   } catch (error) {
-    console.error('Failed to create maintenance request:', error)
+    console.error('Failed to update user profile:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }

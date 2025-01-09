@@ -11,7 +11,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Bell, Settings, LogOut } from 'lucide-react'
+import { Settings, LogOut } from 'lucide-react'
+import { NotificationDropdown } from "@/components/notifications/notification-dropdown"
 
 export function DashboardHeader() {
   const { data: session } = useSession()
@@ -23,9 +24,7 @@ export function DashboardHeader() {
           <h1 className="text-xl font-bold">B2RYJ-SaaS</h1>
         </div>
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon">
-            <Bell className="h-5 w-5" />
-          </Button>
+          <NotificationDropdown />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">

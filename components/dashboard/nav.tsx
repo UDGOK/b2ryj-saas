@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { Users, Building2, FileText, UserPlus, MessageSquare, WrenchIcon, ClipboardList, DollarSign, BarChart, Settings, Users2 } from 'lucide-react'
+import { Users, Building2, FileText, UserPlus, MessageSquare, WrenchIcon, ClipboardList, DollarSign, BarChart, Settings, Users2, UserCircle } from 'lucide-react'
 
 const routes = [
   {
@@ -133,6 +133,12 @@ const routes = [
         description: "Call, text, chat. We are here to assist.",
       },
     ],
+  },
+  {
+    title: "Profile",
+    icon: UserCircle,
+    href: "/profile",
+    items: [],
   },
 ]
 
