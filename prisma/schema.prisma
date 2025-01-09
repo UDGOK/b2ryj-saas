@@ -8,25 +8,48 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  password      String
-  role          Role      @default(TENANT)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                  String               @id @default(cuid())
+  name                String?
+  email               String               @unique
+  password            String
+  role                Role                 @default(TENANT)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  propertyId          String?
   maintenanceRequests MaintenanceRequest[]
+  payments            Payment[]
+  property            Property?            @relation(fields: [propertyId], references: [id])
+}
+
+model Property {
+  id        String   @id @default(cuid())
+  name      String
+  address   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     User[]
 }
 
 model MaintenanceRequest {
   id          String   @id @default(cuid())
   description String
   priority    String
-  status      String
+  status      String   @default("pending")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   userId      String
   user        User     @relation(fields: [userId], references: [id])
+}
+
+model Payment {
+  id              String   @id @default(cuid())
+  amount          Float
+  status          String
+  stripePaymentId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
 }
 
 enum Role {

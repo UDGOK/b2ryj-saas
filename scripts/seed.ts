@@ -5,6 +5,14 @@ const prisma = new PrismaClient()
 
 async function main() {
   try {
+    // Create a property
+    const property = await prisma.property.create({
+      data: {
+        name: 'Sunset Apartments',
+        address: '123 Main Street, Cityville, ST 12345',
+      },
+    })
+
     // Create admin user
     const adminPassword = await hash('admin123', 10)
     const admin = await prisma.user.upsert({
@@ -15,6 +23,7 @@ async function main() {
         name: 'Admin User',
         password: adminPassword,
         role: 'ADMIN',
+        propertyId: property.id,
       },
     })
     console.log('Admin user created:', admin.email)
@@ -29,6 +38,7 @@ async function main() {
         name: 'Property Owner',
         password: ownerPassword,
         role: 'PROPERTY_OWNER',
+        propertyId: property.id,
       },
     })
     console.log('Property owner created:', owner.email)
@@ -43,6 +53,7 @@ async function main() {
         name: 'Maintenance Staff',
         password: maintenancePassword,
         role: 'MAINTENANCE',
+        propertyId: property.id,
       },
     })
     console.log('Maintenance user created:', maintenance.email)
@@ -57,9 +68,46 @@ async function main() {
         name: 'Test Tenant',
         password: tenantPassword,
         role: 'TENANT',
+        propertyId: property.id,
       },
     })
     console.log('Tenant user created:', tenant.email)
+
+    // Create some sample maintenance requests
+    await prisma.maintenanceRequest.createMany({
+      data: [
+        {
+          description: 'Leaking faucet in kitchen',
+          priority: 'medium',
+          status: 'pending',
+          userId: tenant.id,
+        },
+        {
+          description: 'AC not working properly',
+          priority: 'high',
+          status: 'in_progress',
+          userId: tenant.id,
+        },
+      ],
+    })
+    console.log('Sample maintenance requests created')
+
+    // Create some sample payments
+    await prisma.payment.createMany({
+      data: [
+        {
+          amount: 1200.00,
+          status: 'completed',
+          userId: tenant.id,
+        },
+        {
+          amount: 1200.00,
+          status: 'pending',
+          userId: tenant.id,
+        },
+      ],
+    })
+    console.log('Sample payments created')
 
   } catch (error) {
     console.error('Error seeding database:', error)
