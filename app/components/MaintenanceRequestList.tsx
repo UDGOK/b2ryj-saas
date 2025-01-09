@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import io from 'socket.io-client'
+import { Button } from "@/components/ui/button"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
 
 interface MaintenanceRequest {
   id: string
@@ -10,8 +12,6 @@ interface MaintenanceRequest {
   priority: string
   status: string
   createdAt: string
-  updatedAt: string
-  userId: string
 }
 
 export default function MaintenanceRequestList() {
@@ -21,23 +21,22 @@ export default function MaintenanceRequestList() {
 
   useEffect(() => {
     fetchMaintenanceRequests()
-
-    const socket = io()
-
-    socket.on('maintenanceUpdate', (updatedRequest) => {
-      setRequests((prevRequests) =>
-        prevRequests.map((request) =>
-          request.id === updatedRequest.id ? updatedRequest : request
-        )
-      )
-    })
-
-    return () => {
-      socket.disconnect()
-    }
   }, [])
 
-  // ... (rest of the component remains the same)
+  const fetchMaintenanceRequests = async () => {
+    try {
+      const response = await fetch('/api/maintenance-requests')
+      if (!response.ok) {
+        throw new Error('Failed to fetch maintenance requests')
+      }
+      const data = await response.json()
+      setRequests(data)
+    } catch (error) {
+      console.error('Error fetching maintenance requests:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleStatusUpdate = async (requestId: string, newStatus: string) => {
     try {
@@ -51,17 +50,54 @@ export default function MaintenanceRequestList() {
         throw new Error('Failed to update maintenance request status')
       }
 
-      const updatedRequest = await response.json()
-      
-      // Emit the update through WebSocket
-      const socket = io()
-      socket.emit('maintenanceUpdate', updatedRequest)
-
+      fetchMaintenanceRequests()
     } catch (error) {
       console.error('Error updating maintenance request status:', error)
     }
   }
 
-  // ... (rest of the component remains the same)
+  if (isLoading) {
+    return <div>Loading maintenance requests...</div>
+  }
+
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Description</TableHead>
+          <TableHead>Priority</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Created At</TableHead>
+          <TableHead>Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {requests.map((request) => (
+          <TableRow key={request.id}>
+            <TableCell>{request.description}</TableCell>
+            <TableCell>
+              <Badge variant={request.priority === 'high' ? 'destructive' : request.priority === 'medium' ? 'default' : 'secondary'}>
+                {request.priority}
+              </Badge>
+            </TableCell>
+            <TableCell>{request.status}</TableCell>
+            <TableCell>{new Date(request.createdAt).toLocaleDateString()}</TableCell>
+            <TableCell>
+              {session?.user?.role === 'MAINTENANCE' && (
+                <>
+                  <Button onClick={() => handleStatusUpdate(request.id, 'in_progress')} variant="outline" size="sm" className="mr-2">
+                    Start
+                  </Button>
+                  <Button onClick={() => handleStatusUpdate(request.id, 'completed')} variant="outline" size="sm">
+                    Complete
+                  </Button>
+                </>
+              )}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  )
 }
 
