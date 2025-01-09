@@ -1,17 +1,5 @@
 {
-  "/_not-found": "app/_not-found.js",
-  "/api/create-payment-intent/route": "app/api/create-payment-intent/route.js",
-  "/api/maintenance-requests/[id]/route": "app/api/maintenance-requests/[id]/route.js",
-  "/api/maintenance-requests/route": "app/api/maintenance-requests/route.js",
-  "/api/payments/[tenantId]/route": "app/api/payments/[tenantId]/route.js",
-  "/api/payments/route": "app/api/payments/route.js",
-  "/api/smart-home/devices/[id]/[action]/route": "app/api/smart-home/devices/[id]/[action]/route.js",
-  "/api/tenants/[id]/route": "app/api/tenants/[id]/route.js",
-  "/api/smart-home/devices/route": "app/api/smart-home/devices/route.js",
-  "/api/tenants/route": "app/api/tenants/route.js",
-  "/auth/signin/page": "app/auth/signin/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
-  "/maintenance/page": "app/maintenance/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
-  "/page": "app/page.js"
+  "/dashboard/page": "app/dashboard/page.js"
 }

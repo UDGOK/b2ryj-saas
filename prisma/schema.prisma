@@ -8,54 +8,301 @@ datasource db {
 }
 
 model User {
-  id                  String               @id @default(cuid())
-  name                String?
-  email               String               @unique
-  password            String
-  role                Role                 @default(TENANT)
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  propertyId          String?
-  maintenanceRequests MaintenanceRequest[]
-  payments            Payment[]
-  property            Property?            @relation(fields: [propertyId], references: [id])
+  id                    String                @id @default(cuid())
+  email                 String                @unique
+  password              String
+  name                  String?
+  role                  Role                  @default(TENANT)
+  phone                 String?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  isActive              Boolean               @default(true)
+  propertyId            String?
+  property              Property?             @relation(fields: [propertyId], references: [id])
+  maintenanceRequests   MaintenanceRequest[]
+  payments              Payment[]
+  leases               Lease[]               @relation("TenantLeases")
+  applications         RentalApplication[]
+  messages             Message[]
+  notifications        Notification[]
+  maintenanceBids      MaintenanceBid[]     @relation("ServiceProvider")
+  teamMemberships      TeamMember[]
+  assignedProperties   Property[]            @relation("PropertyManager")
 }
 
 model Property {
-  id        String   @id @default(cuid())
-  name      String
-  address   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  users     User[]
+  id                    String                @id @default(cuid())
+  name                  String
+  address               String
+  description           String?
+  type                  PropertyType
+  status               PropertyStatus        @default(ACTIVE)
+  rent                  Float
+  bedrooms             Int
+  bathrooms            Float
+  squareFeet           Int?
+  amenities            String[]
+  images               String[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  users                User[]
+  leases               Lease[]
+  maintenanceRequests  MaintenanceRequest[]
+  listings             Listing[]
+  managers             User[]                @relation("PropertyManager")
+  messages             Message[]
+  teamMembers          TeamMember[]
+}
+
+model Lease {
+  id                    String                @id @default(cuid())
+  startDate            DateTime
+  endDate              DateTime
+  monthlyRent          Float
+  securityDeposit      Float
+  status               LeaseStatus           @default(PENDING)
+  documents            Document[]
+  propertyId           String
+  property             Property              @relation(fields: [propertyId], references: [id])
+  tenants              User[]                @relation("TenantLeases")
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  payments             Payment[]
+}
+
+model RentalApplication {
+  id                    String                @id @default(cuid())
+  applicantId          String
+  applicant            User                  @relation(fields: [applicantId], references: [id])
+  propertyId           String
+  property             Property              @relation(fields: [propertyId], references: [id])
+  status               ApplicationStatus     @default(PENDING)
+  creditScore          Int?
+  income               Float?
+  employmentInfo       Json?
+  references           Json?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  documents            Document[]
 }
 
 model MaintenanceRequest {
-  id          String   @id @default(cuid())
-  description String
-  priority    String
-  status      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  id                    String                @id @default(cuid())
+  title                String
+  description          String
+  priority             Priority
+  status               RequestStatus         @default(PENDING)
+  images               String[]
+  propertyId           String
+  property             Property              @relation(fields: [propertyId], references: [id])
+  requesterId          String
+  requester            User                  @relation(fields: [requesterId], references: [id])
+  bids                 MaintenanceBid[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+}
+
+model MaintenanceBid {
+  id                    String                @id @default(cuid())
+  amount               Float
+  description          String
+  estimatedTime        String
+  status               BidStatus             @default(PENDING)
+  requestId            String
+  request              MaintenanceRequest    @relation(fields: [requestId], references: [id])
+  providerId           String
+  provider             User                  @relation("ServiceProvider", fields: [providerId], references: [id])
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
 }
 
 model Payment {
-  id              String   @id @default(cuid())
-  amount          Float
-  status          String
-  stripePaymentId String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  userId          String
-  user            User     @relation(fields: [userId], references: [id])
+  id                    String                @id @default(cuid())
+  amount               Float
+  type                 PaymentType
+  status               PaymentStatus         @default(PENDING)
+  dueDate              DateTime?
+  paidAt               DateTime?
+  leaseId              String?
+  lease                Lease?                @relation(fields: [leaseId], references: [id])
+  userId               String
+  user                 User                  @relation(fields: [userId], references: [id])
+  stripePaymentId      String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+}
+
+model Listing {
+  id                    String                @id @default(cuid())
+  title                String
+  description          String
+  price                Float
+  status               ListingStatus         @default(ACTIVE)
+  propertyId           String
+  property             Property              @relation(fields: [propertyId], references: [id])
+  syndicatedTo         String[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+}
+
+model Message {
+  id                    String                @id @default(cuid())
+  content              String
+  type                 MessageType
+  propertyId           String
+  property             Property              @relation(fields: [propertyId], references: [id])
+  senderId             String
+  sender               User                  @relation(fields: [senderId], references: [id])
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+}
+
+model Document {
+  id                    String                @id @default(cuid())
+  name                 String
+  type                 DocumentType
+  url                  String
+  leaseId              String?
+  lease                Lease?                @relation(fields: [leaseId], references: [id])
+  applicationId        String?
+  application          RentalApplication?    @relation(fields: [applicationId], references: [id])
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+}
+
+model TeamMember {
+  id                    String                @id @default(cuid())
+  userId               String
+  user                 User                  @relation(fields: [userId], references: [id])
+  propertyId           String
+  property             Property              @relation(fields: [propertyId], references: [id])
+  role                 TeamRole
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+}
+
+model Notification {
+  id                    String                @id @default(cuid())
+  title                String
+  content              String
+  type                 NotificationType
+  isRead               Boolean               @default(false)
+  userId               String
+  user                 User                  @relation(fields: [userId], references: [id])
+  createdAt            DateTime              @default(now())
 }
 
 enum Role {
   ADMIN
   PROPERTY_OWNER
+  PROPERTY_MANAGER
   MAINTENANCE
+  SERVICE_PROVIDER
   TENANT
+  APPLICANT
+}
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  CONDO
+  TOWNHOUSE
+  COMMERCIAL
+}
+
+enum PropertyStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+  VACANT
+  OCCUPIED
+}
+
+enum LeaseStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  TERMINATED
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  EMERGENCY
+}
+
+enum RequestStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum BidStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum PaymentType {
+  RENT
+  SECURITY_DEPOSIT
+  MAINTENANCE_FEE
+  LATE_FEE
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum ListingStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  RENTED
+}
+
+enum MessageType {
+  ANNOUNCEMENT
+  MAINTENANCE
+  PAYMENT
+  GENERAL
+}
+
+enum DocumentType {
+  LEASE
+  APPLICATION
+  IDENTIFICATION
+  INCOME_PROOF
+  INSURANCE
+  OTHER
+}
+
+enum TeamRole {
+  MANAGER
+  MAINTENANCE
+  LEASING_AGENT
+  ACCOUNTANT
+}
+
+enum NotificationType {
+  PAYMENT_DUE
+  MAINTENANCE_UPDATE
+  LEASE_UPDATE
+  MESSAGE
+  SYSTEM
 }
 
