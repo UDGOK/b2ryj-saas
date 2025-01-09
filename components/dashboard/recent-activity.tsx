@@ -25,16 +25,18 @@ export function RecentActivity() {
   return (
     <div className="space-y-8">
       {activities.map((activity, index) => (
-        <div key={index} className="flex items-center">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
+        <div key={index} className="flex items-start gap-4">
+          <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-gray-50">
             {activity.icon}
           </div>
-          <div className="ml-4 space-y-1">
-            <p className="text-sm font-medium leading-none">{activity.title}</p>
+          <div className="flex-1 space-y-1">
+            <p className="text-sm font-medium">{activity.title}</p>
             <p className="text-sm text-muted-foreground">
               {activity.description}
             </p>
-            <p className="text-xs text-muted-foreground">{activity.timestamp}</p>
+            <p className="text-xs text-muted-foreground">
+              {activity.timestamp}
+            </p>
           </div>
         </div>
       ))}
