@@ -9,8 +9,11 @@ async function main() {
 
     // Create a property
     console.log('Creating property...')
-    const property = await prisma.property.create({
-      data: {
+    const property = await prisma.property.upsert({
+      where: { id: 'seed-property-id' },
+      update: {},
+      create: {
+        id: 'seed-property-id',
         name: 'Sunset Apartments',
         address: '123 Main Street, Cityville, ST 12345',
       },
@@ -20,8 +23,10 @@ async function main() {
     // Create admin user
     console.log('Creating admin user...')
     const adminPassword = await hash('admin123', 10)
-    const admin = await prisma.user.create({
-      data: {
+    const admin = await prisma.user.upsert({
+      where: { email: 'admin@b2ryj.com' },
+      update: {},
+      create: {
         email: 'admin@b2ryj.com',
         name: 'Admin User',
         password: adminPassword,
@@ -34,8 +39,10 @@ async function main() {
     // Create property owner user
     console.log('Creating property owner user...')
     const ownerPassword = await hash('owner123', 10)
-    const owner = await prisma.user.create({
-      data: {
+    const owner = await prisma.user.upsert({
+      where: { email: 'owner@b2ryj.com' },
+      update: {},
+      create: {
         email: 'owner@b2ryj.com',
         name: 'Property Owner',
         password: ownerPassword,
@@ -48,8 +55,10 @@ async function main() {
     // Create maintenance user
     console.log('Creating maintenance user...')
     const maintenancePassword = await hash('maintenance123', 10)
-    const maintenance = await prisma.user.create({
-      data: {
+    const maintenance = await prisma.user.upsert({
+      where: { email: 'maintenance@b2ryj.com' },
+      update: {},
+      create: {
         email: 'maintenance@b2ryj.com',
         name: 'Maintenance Staff',
         password: maintenancePassword,
@@ -62,8 +71,10 @@ async function main() {
     // Create tenant user
     console.log('Creating tenant user...')
     const tenantPassword = await hash('tenant123', 10)
-    const tenant = await prisma.user.create({
-      data: {
+    const tenant = await prisma.user.upsert({
+      where: { email: 'tenant@b2ryj.com' },
+      update: {},
+      create: {
         email: 'tenant@b2ryj.com',
         name: 'Test Tenant',
         password: tenantPassword,
@@ -79,17 +90,22 @@ async function main() {
       data: [
         {
           description: 'Leaking faucet in kitchen',
-          priority: 'medium',
-          status: 'pending',
-          userId: tenant.id,
+          priority: 'MEDIUM',
+          status: 'PENDING',
+          requesterId: tenant.id,
+          propertyId: property.id,
+          title: 'Kitchen Faucet Leak',
         },
         {
           description: 'AC not working properly',
-          priority: 'high',
-          status: 'in_progress',
-          userId: tenant.id,
+          priority: 'HIGH',
+          status: 'IN_PROGRESS',
+          requesterId: tenant.id,
+          propertyId: property.id,
+          title: 'AC Malfunction',
         },
       ],
+      skipDuplicates: true,
     })
     console.log('Sample maintenance requests created')
 
@@ -99,15 +115,18 @@ async function main() {
       data: [
         {
           amount: 1200.00,
-          status: 'completed',
+          status: 'COMPLETED',
           userId: tenant.id,
+          type: 'RENT',
         },
         {
           amount: 1200.00,
-          status: 'pending',
+          status: 'PENDING',
           userId: tenant.id,
+          type: 'RENT',
         },
       ],
+      skipDuplicates: true,
     })
     console.log('Sample payments created')
 
