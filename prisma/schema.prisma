@@ -21,13 +21,13 @@ model User {
   property              Property?             @relation(fields: [propertyId], references: [id])
   maintenanceRequests   MaintenanceRequest[]
   payments              Payment[]
-  leases               Lease[]               @relation("TenantLeases")
-  applications         RentalApplication[]
-  messages             Message[]
-  notifications        Notification[]
-  maintenanceBids      MaintenanceBid[]     @relation("ServiceProvider")
-  teamMemberships      TeamMember[]
-  assignedProperties   Property[]            @relation("PropertyManager")
+  leases                Lease[]               @relation("TenantLeases")
+  applications          RentalApplication[]
+  messages              Message[]
+  notifications         Notification[]
+  maintenanceBids       MaintenanceBid[]      @relation("ServiceProvider")
+  teamMemberships       TeamMember[]
+  assignedProperties    Property[]            @relation("PropertyManager")
 }
 
 model Property {
@@ -35,161 +35,162 @@ model Property {
   name                  String
   address               String
   description           String?
-  type                  PropertyType
-  status               PropertyStatus        @default(ACTIVE)
-  rent                  Float
-  bedrooms             Int
-  bathrooms            Float
-  squareFeet           Int?
-  amenities            String[]
-  images               String[]
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  users                User[]
-  leases               Lease[]
-  maintenanceRequests  MaintenanceRequest[]
-  listings             Listing[]
-  managers             User[]                @relation("PropertyManager")
-  messages             Message[]
-  teamMembers          TeamMember[]
+  type                  PropertyType          @default(APARTMENT)
+  status                PropertyStatus        @default(ACTIVE)
+  rent                  Float                 @default(0)
+  bedrooms              Int                   @default(1)
+  bathrooms             Float                 @default(1)
+  squareFeet            Int?
+  amenities             String[]
+  images                String[]
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  users                 User[]
+  leases                Lease[]
+  maintenanceRequests   MaintenanceRequest[]
+  listings              Listing[]
+  managers              User[]                @relation("PropertyManager")
+  messages              Message[]
+  teamMembers           TeamMember[]
+  rentalApplications    RentalApplication[]
 }
 
 model Lease {
   id                    String                @id @default(cuid())
-  startDate            DateTime
-  endDate              DateTime
-  monthlyRent          Float
-  securityDeposit      Float
-  status               LeaseStatus           @default(PENDING)
-  documents            Document[]
-  propertyId           String
-  property             Property              @relation(fields: [propertyId], references: [id])
-  tenants              User[]                @relation("TenantLeases")
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  payments             Payment[]
+  startDate             DateTime
+  endDate               DateTime
+  monthlyRent           Float
+  securityDeposit       Float
+  status                LeaseStatus           @default(PENDING)
+  documents             Document[]
+  propertyId            String
+  property              Property              @relation(fields: [propertyId], references: [id])
+  tenants               User[]                @relation("TenantLeases")
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  payments              Payment[]
 }
 
 model RentalApplication {
   id                    String                @id @default(cuid())
-  applicantId          String
-  applicant            User                  @relation(fields: [applicantId], references: [id])
-  propertyId           String
-  property             Property              @relation(fields: [propertyId], references: [id])
-  status               ApplicationStatus     @default(PENDING)
-  creditScore          Int?
-  income               Float?
-  employmentInfo       Json?
-  references           Json?
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  documents            Document[]
+  applicantId           String
+  applicant             User                  @relation(fields: [applicantId], references: [id])
+  propertyId            String
+  property              Property              @relation(fields: [propertyId], references: [id])
+  status                ApplicationStatus     @default(PENDING)
+  creditScore           Int?
+  income                Float?
+  employmentInfo        Json?
+  references            Json?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  documents             Document[]
 }
 
 model MaintenanceRequest {
   id                    String                @id @default(cuid())
-  title                String
-  description          String
-  priority             Priority
-  status               RequestStatus         @default(PENDING)
-  images               String[]
-  propertyId           String
-  property             Property              @relation(fields: [propertyId], references: [id])
-  requesterId          String
-  requester            User                  @relation(fields: [requesterId], references: [id])
-  bids                 MaintenanceBid[]
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
+  title                 String                @default("Untitled")
+  description           String
+  priority              Priority              @default(LOW)
+  status                RequestStatus         @default(PENDING)
+  images                String[]
+  propertyId            String
+  property              Property              @relation(fields: [propertyId], references: [id])
+  requesterId           String
+  requester             User                  @relation(fields: [requesterId], references: [id])
+  bids                  MaintenanceBid[]
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
 }
 
 model MaintenanceBid {
   id                    String                @id @default(cuid())
-  amount               Float
-  description          String
-  estimatedTime        String
-  status               BidStatus             @default(PENDING)
-  requestId            String
-  request              MaintenanceRequest    @relation(fields: [requestId], references: [id])
-  providerId           String
-  provider             User                  @relation("ServiceProvider", fields: [providerId], references: [id])
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
+  amount                Float
+  description           String
+  estimatedTime         String
+  status                BidStatus             @default(PENDING)
+  requestId             String
+  request               MaintenanceRequest    @relation(fields: [requestId], references: [id])
+  providerId            String
+  provider              User                  @relation("ServiceProvider", fields: [providerId], references: [id])
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
 }
 
 model Payment {
   id                    String                @id @default(cuid())
-  amount               Float
-  type                 PaymentType
-  status               PaymentStatus         @default(PENDING)
-  dueDate              DateTime?
-  paidAt               DateTime?
-  leaseId              String?
-  lease                Lease?                @relation(fields: [leaseId], references: [id])
-  userId               String
-  user                 User                  @relation(fields: [userId], references: [id])
-  stripePaymentId      String?
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
+  amount                Float
+  type                  PaymentType           @default(RENT)
+  status                PaymentStatus         @default(PENDING)
+  dueDate               DateTime?
+  paidAt                DateTime?
+  leaseId               String?
+  lease                 Lease?                @relation(fields: [leaseId], references: [id])
+  userId                String
+  user                  User                  @relation(fields: [userId], references: [id])
+  stripePaymentId       String?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
 }
 
 model Listing {
   id                    String                @id @default(cuid())
-  title                String
-  description          String
-  price                Float
-  status               ListingStatus         @default(ACTIVE)
-  propertyId           String
-  property             Property              @relation(fields: [propertyId], references: [id])
-  syndicatedTo         String[]
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
+  title                 String
+  description           String
+  price                 Float
+  status                ListingStatus         @default(ACTIVE)
+  propertyId            String
+  property              Property              @relation(fields: [propertyId], references: [id])
+  syndicatedTo          String[]
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
 }
 
 model Message {
   id                    String                @id @default(cuid())
-  content              String
-  type                 MessageType
-  propertyId           String
-  property             Property              @relation(fields: [propertyId], references: [id])
-  senderId             String
-  sender               User                  @relation(fields: [senderId], references: [id])
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
+  content               String
+  type                  MessageType
+  propertyId            String
+  property              Property              @relation(fields: [propertyId], references: [id])
+  senderId              String
+  sender                User                  @relation(fields: [senderId], references: [id])
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
 }
 
 model Document {
   id                    String                @id @default(cuid())
-  name                 String
-  type                 DocumentType
-  url                  String
-  leaseId              String?
-  lease                Lease?                @relation(fields: [leaseId], references: [id])
-  applicationId        String?
-  application          RentalApplication?    @relation(fields: [applicationId], references: [id])
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
+  name                  String
+  type                  DocumentType
+  url                   String
+  leaseId               String?
+  lease                 Lease?                @relation(fields: [leaseId], references: [id])
+  applicationId         String?
+  application           RentalApplication?    @relation(fields: [applicationId], references: [id])
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
 }
 
 model TeamMember {
   id                    String                @id @default(cuid())
-  userId               String
-  user                 User                  @relation(fields: [userId], references: [id])
-  propertyId           String
-  property             Property              @relation(fields: [propertyId], references: [id])
-  role                 TeamRole
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
+  userId                String
+  user                  User                  @relation(fields: [userId], references: [id])
+  propertyId            String
+  property              Property              @relation(fields: [propertyId], references: [id])
+  role                  TeamRole
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
 }
 
 model Notification {
   id                    String                @id @default(cuid())
-  title                String
-  content              String
-  type                 NotificationType
-  isRead               Boolean               @default(false)
-  userId               String
-  user                 User                  @relation(fields: [userId], references: [id])
-  createdAt            DateTime              @default(now())
+  title                 String
+  content               String
+  type                  NotificationType
+  isRead                Boolean               @default(false)
+  userId                String
+  user                  User                  @relation(fields: [userId], references: [id])
+  createdAt             DateTime              @default(now())
 }
 
 enum Role {
